@@ -1,0 +1,9 @@
+The following libraries are used in the main script:
+numpy
+pandas
+matplotlib.pyplot
+scipy.stats
+scipy.signal.find_peaks
+skimage.filters
+
+This code was developed in Python version 3.11.7.
