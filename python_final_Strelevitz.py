@@ -11,21 +11,28 @@ from scipy.signal import find_peaks
 from skimage import filters
 
 #import data
-x_eye = np.load('eye.xPos.npy')
-y_eye = np.load('eye.yPos.npy')
-eye_time = np.load('eye.times.npy')
-run_speed = np.load('running.speed.npy')
-run_time = np.load('running.times.npy')
-pupil_size = np.load('eye.size.npy')
-neural_activity = np.load('frame.neuralActivity.npy')
+# LP: please always specify an input data directory, so that the code can be run on any machine
+# regardless of where I've put the data!
+from pathlib import Path
+input_data_dir = Path("/Users/vigji/Downloads/session_0")
+x_eye = np.load(input_data_dir / 'eye.xPos.npy')
+y_eye = np.load(input_data_dir / 'eye.yPos.npy')
+eye_time = np.load(input_data_dir / 'eye.times.npy')
+run_speed = np.load(input_data_dir / 'running.speed.npy')
+run_time = np.load(input_data_dir / 'running.times.npy')
+pupil_size = np.load(input_data_dir / 'eye.size.npy')
+neural_activity = np.load(input_data_dir / 'frame.neuralActivity.npy')
 #immediately zscore neural signal so I don't forget later
 neural_activity = stats.zscore(neural_activity)
-neural_times = np.load('frame.times.npy')
-names_file = open('neuron.ttype.txt')
+neural_times = np.load(input_data_dir / 'frame.times.npy')
+names_file = open(input_data_dir / 'neuron.ttype.txt')
 names = names_file.readlines()
 #create df for neurons
 neurons_df = pd.DataFrame(dict(type=names))
 neurons_df.index = [f"neuron_{i}" for i in range(len(names))]
+
+# LP: be more generous with empty lines! Also, if you want to have nicely formatted code 
+# for free, you can check out black (https://black.readthedocs.io/en/stable/)
 #first we need to define saccades, which will be our events of interest.
 def find_saccades(x_eye,y_eye,min_dist):
     """
