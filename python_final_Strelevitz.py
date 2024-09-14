@@ -42,7 +42,7 @@ Find sufficiently high peaks in the velocity trace to define saccadic eye moveme
     """
     
     #find velocity
-    diffX = np.diff(x_eye, 1, 0)
+    diffX = np.diff(x_eye, 1, 0)  # LP: small, but keep variable names lowercase
     diffY = np.diff(y_eye, 1, 0)
     velocity = np.squeeze(np.sqrt(diffX**2 + diffY**2))
     #choose velocity threshold
@@ -60,15 +60,16 @@ Find sufficiently high peaks in the velocity trace to define saccadic eye moveme
     for index, value in enumerate(peaks):
         velocity_slice = velocity[value-min_dist:value]
         onsets[index] = min_dist - (np.where(velocity_slice<thresh/2))[0][-1]
-    onsets = onsets.astype(int)
+    onsets = onsets.astype(int)  # LP: could have initialized as int specifying dtype
     #detect saccade offsets (check which following points fall below half threshold), in index distance from the peak
     offsets = np.zeros((np.size(peaks)))
     for index, value in enumerate(peaks):
         velocity_slice = velocity[value:value+min_dist]
         offsets[index] = (np.where(velocity_slice<thresh/2))[0][0]
-    offsets = offsets.astype(int)
+    offsets = offsets.astype(int)  # LP: I would suggest use a single loop for both onsets and offsets
+
     sacc_indexes = peaks[:, None] + np.arange(-5, 5) #just for sanity check purposes
-    sacc_velos = np.squeeze(velocity[sacc_indexes]) #just for sanity check purposes
+    sacc_velos = np.squeeze(velocity[sacc_indexes]) #just for sanity check purposes  # LP: don't leave it around in a function! either return or don't compute
     duration=offsets+onsets
     #turn into times
     peak_time = np.squeeze(eye_time[peaks])
@@ -93,8 +94,15 @@ Find sufficiently high peaks in the velocity trace to define saccadic eye moveme
             direction_indicator.append('t')
     #at this point I'll collect all these quantities into a dataframe,
     #where each row is a single saccade
-    saccades_df = pd.DataFrame(dict(onset=onset_time,offset=offset_time,duration=duration,amplitude=amplitudes,direction=direction_indicator))#,velocities=sacc_velos,time_range=eta_times))
+    saccades_df = pd.DataFrame(dict(onset=onset_time,
+                                    offset=offset_time,
+                                    duration=duration,
+                                    amplitude=amplitudes,
+                                    direction=direction_indicator))#,velocities=sacc_velos,time_range=eta_times))
     saccades_df.index = [f"sacc_{i}" for i in range(len(onsets))]
+
+    # LP: I feel there might be some redundancy here. Why eg nasal, temporal if you already have direction column?
+    # In general, it is better not to return too many separate variables.
     return saccades_df, peaks, peak_time, onsets, offsets, velocity, nasal, temporal
 #run the function
 [saccades_df,peaks, peak_time, onsets, offsets, velocity, nasal, temporal] = find_saccades(x_eye,y_eye,15)
@@ -159,6 +167,7 @@ axs[1].set_title('Velocity ETA')
 plt.tight_layout()
 #saccade etas
 fig, axs = plt.subplots(3, 1)
+#LP: why not a nice loop? :)
 axs[0].imshow(eta_x.T)
 axs[0].set_title('All saccades')
 axs[1].plot(eta_x[nasal].T,  color = 'gray')
@@ -176,6 +185,8 @@ ec_etas = neural_activity.T[neurons_df['type'].str.contains('EC')]
 plt.plot(ec_etas.T[neuro_indices].mean(axis = 0), color = 'orange')
 in_etas = neural_activity.T[neurons_df['type'].str.contains('IN')]
 plt.plot(in_etas.T[neuro_indices].mean(axis = 0), color = 'blue')
+
+#LP: absolutely necessary loop here! :D
 #do this for every subtype of inhibitory neuron
 pvalb_etas = neural_activity.T[neurons_df['type'].str.contains('Pvalb')]
 plt.plot(pvalb_etas.T[neuro_indices].mean(axis = 0), color = 'red')
